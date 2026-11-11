@@ -22,11 +22,20 @@ src/
   services/       # auth.ts (mocks com TODO)
 ```
 
-## Onboarding
+## Telas
 
-- [x] 1. Abertura
-- [ ] 2–4. Carrossel de boas-vindas
-- [ ] 5. Entrar
-- [ ] 6. Criar senha
-- [ ] 7. Área dos responsáveis
-- [ ] 8. Proteção de dados
+- [x] Abertura → carrossel de boas-vindas (3 slides)
+- [x] Entrar (Apple / Google / Facebook simulados + e-mail)
+- [x] Criar senha (1/3) · Área dos responsáveis (2/3) · Proteção de dados (3/3)
+- [x] Primeiro livro por idade → nome da criança
+- [x] Leitor em formato de livro: narração pt-BR, destaque de palavras, toque na palavra para ouvir,
+      modo noite, velocidade, 2 páginas lado a lado em tela larga
+- [x] Detalhe do livro, quiz, medalhas, sequência de dias
+- [x] Abas: Explorar, Buscar, Perfil, Meu amigo, Correio · assinatura simulada
+
+## Pendências marcadas com TODO
+
+- `src/constants.ts`: número real de títulos do catálogo (hoje "500", provisório)
+- `src/services/auth.ts`: login social e backend
+- `src/app/assinatura.tsx`: compra real
+- `src/app/politica.tsx`: texto jurídico final

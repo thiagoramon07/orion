@@ -14,6 +14,12 @@ export type ReaderSettings = {
 };
 
 export type AppState = {
+  /** E-mail do responsável (cadastro). */
+  guardianEmail: string;
+  /** Passou pela verificação de adulto (ano de nascimento — o ano em si não é guardado). */
+  guardianVerified: boolean;
+  /** Data (ISO) em que aceitou a proteção de dados. */
+  privacyAcceptedAt?: string;
   childName: string;
   childAge: number;
   firstBookId?: string;
@@ -34,6 +40,8 @@ export type AppState = {
 };
 
 const INITIAL: AppState = {
+  guardianEmail: '',
+  guardianVerified: false,
   childName: '',
   childAge: 6,
   buddyTipDismissed: false,
@@ -54,6 +62,9 @@ const STORAGE_KEY = 'folheia:estado:v1';
 export const PREVIEW_PAGES = 3;
 
 type Actions = {
+  setGuardianEmail: (email: string) => void;
+  setGuardianVerified: () => void;
+  acceptPrivacy: () => void;
   setChild: (name: string, age: number, firstBookId?: string) => void;
   toggleFavorite: (bookId: string) => void;
   toggleSaved: (bookId: string) => void;
@@ -110,6 +121,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const actions = useMemo<Actions>(
     () => ({
+      setGuardianEmail: (guardianEmail) => setState((s) => ({ ...s, guardianEmail })),
+      setGuardianVerified: () => setState((s) => ({ ...s, guardianVerified: true })),
+      acceptPrivacy: () => setState((s) => ({ ...s, privacyAcceptedAt: new Date().toISOString() })),
       setChild: (childName, childAge, firstBookId) =>
         setState((s) => ({ ...s, childName, childAge, firstBookId: firstBookId ?? s.firstBookId })),
       toggleFavorite: (id) => setState((s) => ({ ...s, favorites: toggle(s.favorites, id) })),

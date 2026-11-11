@@ -121,6 +121,57 @@ export const BOOKS: Book[] = [
     ],
   },
   {
+    id: 'caca-lixeiras',
+    title: 'Cacá e as Lixeiras Coloridas',
+    series: 'Aventuras da Cacá',
+    author: 'Lia Moreira',
+    illustrator: 'Equipe Folheia',
+    synopsis: 'No parque, Cacá conhece cinco lixeiras falantes e descobre, rindo muito, para onde vai cada tipo de lixo.',
+    ageMin: 4,
+    ageMax: 6,
+    level: 'B',
+    tags: ['cacá', 'meio ambiente', 'reciclagem', 'humor', 'cores', 'natureza'],
+    isNew: true,
+    popularity: 97,
+    cover: { background: '#3FA7D6', detail: colors.accentLight, motif: 'dots' },
+    pages: [
+      {
+        text: 'No parque, Cacá encontrou cinco lixeiras coloridas. E cada uma tinha uma boca bem grande!',
+        scene: { sky: '#BFE3F2', ground: colors.leaf, items: ['sun', 'tree', 'cloud'], hero: 'caca' },
+      },
+      {
+        text: 'Oi, Cacá! Eu sou a lixeira azul e adoro comer papel: jornal, caderno velho e caixa de papelão. Nham, nham!',
+        scene: { sky: '#CFE6FA', ground: '#3F7FD1', items: ['cloud'], hero: '📦' },
+      },
+      {
+        text: 'A lixeira vermelha deu uma gargalhada: eu fico com o plástico! Garrafinha, copinho e pote de iogurte.',
+        scene: { sky: '#FBE1DC', ground: '#D9483B', items: ['sun'], hero: '🧴' },
+      },
+      {
+        text: 'A lixeira verde falou baixinho: eu guardo o vidro. Mas cuidado: vidro quebrado, só um adulto pode pegar!',
+        scene: { sky: '#DDF2DE', ground: '#3E9A4E', items: ['flowers'], hero: '🫙' },
+      },
+      {
+        text: 'E eu, a amarela, fico com o metal: latinha de suco e tampinha de pote. Plim, plim!',
+        scene: { sky: '#FFF1C7', ground: '#F2B705', items: ['sun'], hero: '🥫' },
+      },
+      {
+        text: 'A lixeira marrom bocejou: casca de banana e resto de comida são comigo. Eu viro adubo para as plantas!',
+        scene: { sky: '#F1E3D3', ground: '#8A5A33', items: ['tree', 'flowers'], hero: '🍌' },
+      },
+      {
+        text: 'Cacá separou tudo direitinho. O parque ficou limpinho, e as cinco lixeiras cantaram juntas: separar é cuidar!',
+        scene: { sky: '#FFD36E', ground: colors.leaf, items: ['sun', 'tree', 'flowers'], hero: 'caca' },
+      },
+    ],
+    quiz: [
+      { question: 'Qual lixeira come papel?', options: ['A azul', 'A vermelha', 'A verde'], answer: 0 },
+      { question: 'Onde vai a garrafinha de plástico?', options: ['Na amarela', 'Na vermelha', 'Na marrom'], answer: 1 },
+      { question: 'O que acontece com a casca de banana na lixeira marrom?', options: ['Vira adubo', 'Vira papel', 'Vira vidro'], answer: 0 },
+      { question: 'Quem pode pegar vidro quebrado?', options: ['Qualquer criança', 'Só um adulto', 'A Cacá'], answer: 1 },
+    ],
+  },
+  {
     id: 'sapo-astronauta',
     title: 'O Sapo Astronauta',
     author: 'Renato Ivo',

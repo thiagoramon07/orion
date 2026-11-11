@@ -49,6 +49,7 @@ function RootStack() {
       <Stack.Screen name="ler/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
       <Stack.Screen name="quiz/[id]" options={{ presentation: 'modal' }} />
       <Stack.Screen name="assinatura" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="politica" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

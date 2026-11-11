@@ -1,28 +1,33 @@
+import { useMemo } from 'react';
 import { StyleProp, Text, TextStyle } from 'react-native';
 
-import type { Word } from '@/hooks/use-narration';
+import { tokenize } from '@/hooks/use-narration';
 import { colors } from '@/theme';
 
 type Props = {
   text: string;
-  words: Word[];
+  /** Índice da palavra em destaque (-1 = nenhuma). */
   activeIndex: number;
   highlight: boolean;
   night: boolean;
+  /** Toque numa palavra (ex.: para ouvir só ela). */
+  onWordPress?: (index: number, word: string) => void;
   style?: StyleProp<TextStyle>;
 };
 
-/** Texto da página com a palavra em leitura destacada. */
-export function HighlightedText({ text, words, activeIndex, highlight, night, style }: Props) {
-  if (!highlight || activeIndex < 0) return <Text style={style}>{text}</Text>;
+/** Texto da página palavra por palavra, com a palavra em leitura destacada. */
+export function HighlightedText({ text, activeIndex, highlight, night, onWordPress, style }: Props) {
+  const words = useMemo(() => tokenize(text), [text]);
   return (
     <Text style={style}>
       {words.map((w, i) => {
         const gap = i < words.length - 1 ? text.slice(w.end, words[i + 1].start) : '';
-        const active = i === activeIndex;
+        const active = highlight && i === activeIndex;
         return (
           <Text key={i}>
             <Text
+              onPress={onWordPress ? () => onWordPress(i, w.text) : undefined}
+              suppressHighlighting
               style={
                 active
                   ? {
@@ -30,7 +35,7 @@ export function HighlightedText({ text, words, activeIndex, highlight, night, st
                       color: night ? colors.white : colors.text,
                       borderRadius: 6,
                     }
-                  : i < activeIndex
+                  : highlight && activeIndex >= 0 && i < activeIndex
                     ? { opacity: 0.75 }
                     : undefined
               }>

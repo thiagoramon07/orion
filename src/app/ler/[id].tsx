@@ -17,16 +17,17 @@ import { Caca } from '@/components/caca';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/icon-button';
 import { Medal } from '@/components/medal';
-import { HighlightedText } from '@/components/reader/highlighted-text';
+import * as Speech from 'expo-speech';
+
+import { BookPage as BookPageView } from '@/components/reader/book-page';
 import { PlayerBar } from '@/components/reader/player-bar';
 import { SettingsPopover } from '@/components/reader/settings-popover';
-import { Scene } from '@/components/scene';
 import { BADGES } from '@/data/badges';
 import { Book, BookPage, getBook } from '@/data/books';
-import { useNarration } from '@/hooks/use-narration';
+import { SPEECH_RATE, useNarration } from '@/hooks/use-narration';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { isUnlocked, PREVIEW_PAGES, useApp } from '@/store/app-store';
-import { colors, fonts, radii } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 type Item = { kind: 'page'; page: BookPage; index: number } | { kind: 'end' } | { kind: 'paywall' };
 
@@ -89,7 +90,7 @@ function Reader({ book }: { book: Book }) {
     [items.length, reduceMotion],
   );
 
-  const { words, wordIndex } = useNarration({
+  const { wordIndex } = useNarration({
     text: pageText,
     playing: playing && !onEnd,
     speed: settings.speed,
@@ -125,27 +126,45 @@ function Reader({ book }: { book: Book }) {
     actions.markNarrationUsed();
   };
 
+  // Toque numa palavra (com a narração pausada) para ouvir só ela.
+  const [tapped, setTapped] = useState(-1);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => setTapped(-1), [index]);
+  useEffect(() => () => clearTimeout(tapTimer.current), []);
+  const speakWord = (i: number, word: string) => {
+    if (playing) return;
+    const clean = word.replace(/[^\p{L}\p{N}-]/gu, '');
+    if (!clean) return;
+    Speech.stop();
+    Speech.speak(clean, { language: 'pt-BR', rate: SPEECH_RATE[settings.speed] * 0.85 });
+    setTapped(i);
+    clearTimeout(tapTimer.current);
+    tapTimer.current = setTimeout(() => setTapped(-1), 1200);
+  };
+
   const fav = state.favorites.includes(book.id);
   const saved = state.saved.includes(book.id);
   const playerSpace = 110 + insets.bottom;
-  const sceneH = Math.min(width * 0.72, height * 0.38);
+  const spread = width >= 700 && width > height;
+  const topSpace = insets.top + 52 + (unlocked ? 0 : 30);
+  const pageH = Math.max(320, height - topSpace - playerSpace - 32);
 
   const renderItem = ({ item }: { item: Item }) => {
     if (item.kind === 'page') {
       const active = item.index === index;
       return (
         <View style={[styles.page, { width, paddingBottom: playerSpace }]}>
-          <Scene scene={item.page.scene} dim={night} style={[styles.scene, { height: sceneH }]} />
-          <View style={[styles.textCard, night && styles.textCardNight]}>
-            <HighlightedText
-              text={item.page.text}
-              words={active ? words : []}
-              activeIndex={active ? wordIndex : -1}
-              highlight={settings.highlight}
-              night={night}
-              style={[styles.pageText, night && { color: colors.primarySoft }]}
-            />
-          </View>
+          <BookPageView
+            page={item.page}
+            number={item.index + 1}
+            width={width}
+            height={pageH}
+            spread={spread}
+            night={night}
+            highlight={settings.highlight || (!playing && tapped >= 0)}
+            activeIndex={!active ? -1 : playing ? wordIndex : tapped}
+            onWordPress={speakWord}
+          />
         </View>
       );
     }
@@ -186,7 +205,7 @@ function Reader({ book }: { book: Book }) {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(_, i) => String(i)}
         renderItem={renderItem}
-        extraData={[index, wordIndex, settings, words]}
+        extraData={[index, wordIndex, settings, tapped, playing, pageH, spread]}
         initialScrollIndex={startPage}
         getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         onMomentumScrollEnd={onScrollEnd}
@@ -261,19 +280,15 @@ function Paywall({ book, width, bottom, night }: { book: Book; width: number; bo
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.primarySoft },
+  root: { flex: 1, backgroundColor: '#EFE6D6' },
   topBar: { backgroundColor: colors.primary },
   topRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 4, gap: 2 },
   topTitle: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: colors.primaryTint, textAlign: 'right', paddingHorizontal: 6 },
   preview: { backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 6 },
   previewText: { fontFamily: fonts.title, fontSize: 15, color: colors.text },
   previewPages: { fontFamily: fonts.bold, fontSize: 13, color: colors.text },
-  page: { paddingHorizontal: 16, paddingTop: 16, gap: 14 },
+  page: { paddingHorizontal: 16, paddingTop: 16, gap: 14, alignItems: 'center' },
   center: { alignItems: 'center', justifyContent: 'center', gap: 12 },
-  scene: { borderRadius: radii.cardLarge },
-  textCard: { backgroundColor: colors.white, borderRadius: radii.cardLarge, padding: 20 },
-  textCardNight: { backgroundColor: '#1F2738' },
-  pageText: { fontFamily: fonts.medium, fontSize: 24, lineHeight: 36, color: colors.text },
   player: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
   endTitle: { fontFamily: fonts.title, fontSize: 28, lineHeight: 32, color: colors.primary, textAlign: 'center' },
   endText: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 24, color: colors.textSecondary, textAlign: 'center' },

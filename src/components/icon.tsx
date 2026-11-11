@@ -29,7 +29,12 @@ export type IconName =
   | 'book'
   | 'video'
   | 'headphones'
-  | 'series';
+  | 'series'
+  | 'user'
+  | 'chart'
+  | 'mail'
+  | 'shield'
+  | 'backspace';
 
 type Props = { name: IconName; size?: number; color?: string; strokeWidth?: number };
 
@@ -171,6 +176,31 @@ export function Icon({ name, size = 24, color = '#1C2333', strokeWidth = 2.2 }: 
       break;
     case 'series':
       body = <Path d="M4.5 4.5h4v15h-4zM10 4.5h4v15h-4zM15.5 5.5l3.8-1 3 14.5-3.8 1z" {...s} />;
+      break;
+    case 'user':
+      body = (
+        <>
+          <Circle cx={12} cy={8.5} r={4} {...s} />
+          <Path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6" {...s} />
+        </>
+      );
+      break;
+    case 'chart':
+      body = <Path d="M4 20.5h16M7 17v-5M12 17V7M17 17v-8" {...s} />;
+      break;
+    case 'mail':
+      body = (
+        <>
+          <Rect x={3.5} y={5.5} width={17} height={13} rx={3} {...s} />
+          <Path d="M4.5 7 12 12.5 19.5 7" {...s} />
+        </>
+      );
+      break;
+    case 'shield':
+      body = <Path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6L12 3ZM8.5 12l2.5 2.5 4.5-5" {...s} />;
+      break;
+    case 'backspace':
+      body = <Path d="M8.5 5.5H20a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H8.5L3 12l5.5-6.5ZM11 9.5l5 5M16 9.5l-5 5" {...s} />;
       break;
   }
   return (
