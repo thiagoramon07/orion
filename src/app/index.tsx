@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -20,6 +20,7 @@ import { Caca } from '@/components/caca';
 import { Logo } from '@/components/logo';
 import { Sparkle } from '@/components/sparkle';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { useApp } from '@/store/app-store';
 import { colors, fonts, sizes } from '@/theme';
 
 /** Posições dos brilhos em % da área superior. */
@@ -35,6 +36,7 @@ const SPARKLES = [
 
 export default function AberturaScreen() {
   const reduceMotion = useReduceMotion();
+  const { state } = useApp();
   const float = useSharedValue(0);
 
   useEffect(() => {
@@ -49,6 +51,9 @@ export default function AberturaScreen() {
   const floatStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -10 * float.value }, { rotate: `${(float.value - 0.5) * 3}deg` }],
   }));
+
+  // Quem já tem perfil de criança vai direto para a estante.
+  if (state.childName) return <Redirect href="/explorar" />;
 
   return (
     <View style={styles.root}>

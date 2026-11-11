@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AppProvider, useApp } from '@/store/app-store';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -21,17 +22,33 @@ export default function RootLayout() {
     DMSans_700Bold,
   });
 
-  useEffect(() => {
-    if (loaded || error) SplashScreen.hideAsync();
-  }, [loaded, error]);
-
   if (!loaded && !error) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.white } }} />
+        <AppProvider>
+          <RootStack />
+        </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function RootStack() {
+  const { ready } = useApp();
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
+
+  if (!ready) return null;
+
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.white } }}>
+      <Stack.Screen name="ler/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+      <Stack.Screen name="quiz/[id]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="assinatura" options={{ presentation: 'modal' }} />
+    </Stack>
   );
 }
