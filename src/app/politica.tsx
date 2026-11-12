@@ -1,16 +1,16 @@
-import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IconButton } from '@/components/icon-button';
 import { colors, fonts, sizes } from '@/theme';
+import { goBackOr } from '@/utils/navigation';
 
 // TODO: substituir pelo texto jurídico final (Termos de Uso e Política de Privacidade).
 export default function PoliticaScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.top}>
-        <IconButton name="close" label="Fechar" color={colors.text} onPress={() => router.back()} />
+        <IconButton name="close" label="Fechar" color={colors.text} onPress={() => goBackOr('/')} />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Termos de Uso e Política de Privacidade</Text>

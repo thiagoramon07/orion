@@ -22,9 +22,9 @@ export default function NomeCriancaScreen() {
   const start = () => {
     if (!valid || !book) return;
     actions.setChild(name.trim(), Number(age) || 6, book.id);
+    // Abre o livro direto; ao fechar o leitor, a criança cai na estante (Explorar).
     router.dismissAll();
-    router.replace('/explorar');
-    router.push({ pathname: '/ler/[id]', params: { id: book.id } });
+    router.replace({ pathname: '/ler/[id]', params: { id: book.id } });
   };
 
   return (

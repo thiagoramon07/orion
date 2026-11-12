@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,6 +8,7 @@ import { IconButton } from '@/components/icon-button';
 import { Logo } from '@/components/logo';
 import { useApp } from '@/store/app-store';
 import { colors, fonts, radii, sizes } from '@/theme';
+import { goBackOr } from '@/utils/navigation';
 
 const PERKS = [
   'Todos os livros liberados, sem limite de páginas',
@@ -24,7 +24,7 @@ export default function AssinaturaScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.top}>
-        <IconButton name="close" label="Fechar" color={colors.white} onPress={() => router.back()} />
+        <IconButton name="close" label="Fechar" color={colors.white} onPress={() => goBackOr('/explorar')} />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <Caca variant="head" size={110} style={{ alignSelf: 'center' }} />
@@ -51,7 +51,7 @@ export default function AssinaturaScreen() {
             onPress={() => {
               // TODO: fluxo real de compra + verificação de adulto.
               actions.setSubscribed(true);
-              router.back();
+              goBackOr('/explorar');
             }}
           />
         )}

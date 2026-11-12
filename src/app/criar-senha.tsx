@@ -9,7 +9,7 @@ import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/input';
 import { ProgressSteps } from '@/components/progress-steps';
 import { createGuardianPassword } from '@/services/auth';
-import { colors, fonts, radii, sizes } from '@/theme';
+import { colors, fonts, sizes } from '@/theme';
 
 export default function CriarSenhaScreen() {
   const { email = '' } = useLocalSearchParams<{ email?: string }>();

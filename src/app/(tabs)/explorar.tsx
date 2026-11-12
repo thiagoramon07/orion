@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
@@ -22,6 +21,7 @@ import { Shelf } from '@/components/shelf';
 import { Book, BOOKS, booksForAge } from '@/data/books';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { currentStreak, useApp } from '@/store/app-store';
+import { useContentWidth } from '@/hooks/use-content-width';
 import { colors, fonts, radii } from '@/theme';
 
 type CategoryId = 'para-voce' | 'novidades' | 'favoritos' | 'leia-pra-mim' | 'videos' | 'audiolivros';
@@ -133,7 +133,7 @@ export default function ExplorarScreen() {
 }
 
 function Featured({ books }: { books: Book[] }) {
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const reduceMotion = useReduceMotion();
   const [active, setActive] = useState(0);
   const listRef = useRef<FlatList<Book>>(null);
@@ -183,9 +183,19 @@ function Featured({ books }: { books: Book[] }) {
           </View>
         )}
       />
-      <View style={styles.dots} accessibilityElementsHidden>
+      <View style={styles.dots}>
         {books.map((b, i) => (
-          <View key={b.id} style={[styles.dot, i === active && styles.dotActive]} />
+          <Pressable
+            key={b.id}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Destaque ${i + 1}: ${b.title}`}
+            onPress={() => {
+              setActive(i);
+              listRef.current?.scrollToOffset({ offset: i * (cardW + 12), animated: true });
+            }}>
+            <View style={[styles.dot, i === active && styles.dotActive]} />
+          </Pressable>
         ))}
       </View>
     </View>
@@ -220,7 +230,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowRadius: 6,
   },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   dotActive: { width: 24, backgroundColor: colors.accent },
   cats: { paddingHorizontal: 20, gap: 10 },

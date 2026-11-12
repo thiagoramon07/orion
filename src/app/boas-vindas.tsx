@@ -1,16 +1,20 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ReactNode, useState } from 'react';
-import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ReactNode, useRef, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { IconButton } from '@/components/icon-button';
 import { Logo } from '@/components/logo';
 import { FanCovers } from '@/components/welcome/fan-covers';
 import { Journey } from '@/components/welcome/journey';
 import { SafeTablets } from '@/components/welcome/safe-tablets';
 import { TITLE_COUNT } from '@/constants';
+import { useContentWidth } from '@/hooks/use-content-width';
+import { useWebKeys } from '@/hooks/use-web-keys';
 import { colors, fonts, sizes } from '@/theme';
+import { notify } from '@/utils/notify';
 
 type Slide = { key: string; color: string; title: string; subtitle: string; art: (active: boolean) => ReactNode };
 
@@ -39,20 +43,38 @@ const SLIDES: Slide[] = [
 ];
 
 function soon(who: string) {
-  const msg = `O acesso para ${who} chega em breve!`;
-  if (Platform.OS === 'web') console.log(msg);
-  else Alert.alert('Em breve', msg);
+  notify('Em breve', `O acesso para ${who} chega em breve!`);
 }
 
 export default function BoasVindasScreen() {
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const [index, setIndex] = useState(0);
   const slide = SLIDES[index];
+  const listRef = useRef<FlatList<Slide>>(null);
+
+  const goTo = (i: number) => {
+    const next = Math.max(0, Math.min(SLIDES.length - 1, i));
+    setIndex(next);
+    listRef.current?.scrollToOffset({ offset: next * width, animated: true });
+  };
+
+  // No computador: setas do teclado trocam o slide.
+  useWebKeys((key) => {
+    if (key === 'ArrowRight') {
+      goTo(index + 1);
+      return true;
+    }
+    if (key === 'ArrowLeft') {
+      goTo(index - 1);
+      return true;
+    }
+  });
 
   return (
     <View style={[styles.root, { backgroundColor: slide.color }]}>
       <StatusBar style="light" />
       <FlatList
+        ref={listRef}
         data={SLIDES}
         horizontal
         pagingEnabled
@@ -76,10 +98,36 @@ export default function BoasVindasScreen() {
       />
 
       <SafeAreaView edges={['bottom']} style={styles.bottom}>
-        <View style={styles.dots} accessible accessibilityLabel={`Tela ${index + 1} de ${SLIDES.length}`}>
-          {SLIDES.map((s, i) => (
-            <View key={s.key} style={[styles.dot, i === index && styles.dotActive]} />
-          ))}
+        <View style={styles.dotsRow}>
+          <IconButton
+            name="back"
+            label="Tela anterior"
+            color={colors.white}
+            size={20}
+            onPress={() => goTo(index - 1)}
+            style={{ opacity: index === 0 ? 0.3 : 1 }}
+          />
+          <View style={styles.dots}>
+            {SLIDES.map((s, i) => (
+              <Pressable
+                key={s.key}
+                onPress={() => goTo(i)}
+                accessibilityRole="button"
+                accessibilityLabel={`Ir para a tela ${i + 1} de ${SLIDES.length}`}
+                accessibilityState={{ selected: i === index }}
+                hitSlop={8}>
+                <View style={[styles.dot, i === index && styles.dotActive]} />
+              </Pressable>
+            ))}
+          </View>
+          <IconButton
+            name="chevron-right"
+            label="Próxima tela"
+            color={colors.white}
+            size={20}
+            onPress={() => goTo(index + 1)}
+            style={{ opacity: index === SLIDES.length - 1 ? 0.3 : 1 }}
+          />
         </View>
         <Button title="Famílias, comecem a ler" variant="white" textColor={slide.color} onPress={() => router.push('/entrar')} />
         <View style={styles.row}>
@@ -106,7 +154,8 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 24, color: 'rgba(255,255,255,0.88)' },
   art: { flex: 1, justifyContent: 'center' },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: sizes.gutter, paddingBottom: 8, gap: 12 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 4 },
+  dotsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  dots: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.45)' },
   dotActive: { width: 26, backgroundColor: colors.accent },
   row: { flexDirection: 'row', gap: 12 },

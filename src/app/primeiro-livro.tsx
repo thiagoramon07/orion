@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,12 +10,13 @@ import { Caca } from '@/components/caca';
 import { IconButton } from '@/components/icon-button';
 import { popularForAge } from '@/data/books';
 import { useApp } from '@/store/app-store';
+import { useContentWidth } from '@/hooks/use-content-width';
 import { colors, fonts, sizes } from '@/theme';
 
 export default function PrimeiroLivroScreen() {
   const { state } = useApp();
   const [age, setAge] = useState(state.childAge || 6);
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const books = popularForAge(age);
   const tileW = Math.min(150, (width - sizes.gutter * 2 - 24) / 2);
 

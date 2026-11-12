@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInRight, ZoomIn } from 'react-native-reanimated';
@@ -10,6 +10,7 @@ import { IconButton } from '@/components/icon-button';
 import { getBook } from '@/data/books';
 import { useApp } from '@/store/app-store';
 import { colors, fonts, radii, sizes } from '@/theme';
+import { goBackOr } from '@/utils/navigation';
 
 export default function QuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,7 +41,7 @@ export default function QuizScreen() {
     <SafeAreaView style={styles.root}>
       <View style={styles.top}>
         <Text style={styles.small}>Quiz · {book?.title}</Text>
-        <IconButton name="close" label="Fechar quiz" color={colors.primary} onPress={() => router.back()} />
+        <IconButton name="close" label="Fechar quiz" color={colors.primary} onPress={() => goBackOr('/explorar')} />
       </View>
 
       {done ? (
@@ -56,7 +57,7 @@ export default function QuizScreen() {
           </Text>
           {score === questions.length ? <Text style={styles.text}>Medalha “Quiz” garantida!</Text> : null}
           <View style={{ alignSelf: 'stretch', gap: 10, marginTop: 12 }}>
-            <Button title="Voltar" variant="accent" onPress={() => router.back()} />
+            <Button title="Voltar" variant="accent" onPress={() => goBackOr('/explorar')} />
             {score < questions.length ? (
               <Button
                 title="Tentar de novo"

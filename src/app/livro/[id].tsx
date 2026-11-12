@@ -12,6 +12,7 @@ import { BADGES } from '@/data/badges';
 import { getBook, LEVEL_LABEL } from '@/data/books';
 import { earnedBadges, isUnlocked, PREVIEW_PAGES, useApp } from '@/store/app-store';
 import { colors, fonts, radii, sizes } from '@/theme';
+import { goBackOr } from '@/utils/navigation';
 
 export default function LivroScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,7 +23,7 @@ export default function LivroScreen() {
     return (
       <SafeAreaView style={[styles.root, { justifyContent: 'center', alignItems: 'center' }]}>
         <Text style={styles.h2}>Livro não encontrado.</Text>
-        <Button title="Voltar" onPress={() => router.back()} style={{ marginTop: 16 }} />
+        <Button title="Voltar" onPress={() => goBackOr('/explorar')} style={{ marginTop: 16 }} />
       </SafeAreaView>
     );
   }
@@ -37,7 +38,7 @@ export default function LivroScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.top}>
-        <IconButton name="back" label="Voltar" color={colors.primary} onPress={() => router.back()} />
+        <IconButton name="back" label="Voltar" color={colors.primary} onPress={() => goBackOr('/explorar')} />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>

@@ -34,14 +34,19 @@
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "^58.0.4",
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --web",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "build": "expo export --platform web",
+    "preview": "npx serve dist --single --listen 4173",
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
   },
   "private": true
 }

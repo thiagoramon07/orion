@@ -1,6 +1,8 @@
 import * as Speech from 'expo-speech';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { getBestPtBrVoice } from '@/utils/voice';
+
 export type Word = { text: string; start: number; end: number };
 
 export function tokenize(text: string): Word[] {
@@ -39,7 +41,9 @@ export function useNarration({ text, playing, speed, onFinished }: Options) {
   const indexRef = useRef(-1);
   const lastText = useRef(text);
   const onFinishedRef = useRef(onFinished);
-  onFinishedRef.current = onFinished;
+  useEffect(() => {
+    onFinishedRef.current = onFinished;
+  });
 
   useEffect(() => {
     const setIndex = (i: number) => {
@@ -92,19 +96,23 @@ export function useNarration({ text, playing, speed, onFinished }: Options) {
     };
     step();
 
-    Speech.speak(text.slice(offset), {
-      language: 'pt-BR',
-      rate,
-      pitch: 1.05,
-      onBoundary: (ev: { charIndex?: number }) => {
-        if (cancelled || typeof ev?.charIndex !== 'number') return;
-        gotBoundary = true;
-        clearTimeout(timer);
-        const ci = offset + ev.charIndex;
-        const idx = words.findIndex((w) => ci >= w.start && ci < w.end + 1);
-        if (idx >= 0) setIndex(idx);
-      },
-      onDone: finish,
+    getBestPtBrVoice().then((voice) => {
+      if (cancelled) return;
+      Speech.speak(text.slice(offset), {
+        language: 'pt-BR',
+        voice,
+        rate,
+        pitch: 1.05,
+        onBoundary: (ev: { charIndex?: number }) => {
+          if (cancelled || typeof ev?.charIndex !== 'number') return;
+          gotBoundary = true;
+          clearTimeout(timer);
+          const ci = offset + ev.charIndex;
+          const idx = words.findIndex((w) => ci >= w.start && ci < w.end + 1);
+          if (idx >= 0) setIndex(idx);
+        },
+        onDone: finish,
+      });
     });
 
     return () => {

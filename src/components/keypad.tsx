@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/icon';
+import { useWebKeys } from '@/hooks/use-web-keys';
 import { colors, fonts, radii } from '@/theme';
 
 type Props = { onDigit: (d: string) => void; onDelete: () => void };
@@ -14,6 +15,18 @@ const ROWS = [
 
 /** Teclado numérico próprio (teclas quadradas arredondadas em tint). */
 export function Keypad({ onDigit, onDelete }: Props) {
+  // No computador, aceita também o teclado físico.
+  useWebKeys((key) => {
+    if (/^\d$/.test(key)) {
+      onDigit(key);
+      return true;
+    }
+    if (key === 'Backspace' || key === 'Delete') {
+      onDelete();
+      return true;
+    }
+  });
+
   return (
     <View style={styles.grid}>
       {ROWS.map((row, r) => (

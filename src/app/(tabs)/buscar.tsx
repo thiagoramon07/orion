@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BookTile } from '@/components/book-tile';
@@ -8,6 +8,7 @@ import { Icon } from '@/components/icon';
 import { Input } from '@/components/input';
 import { searchBooks } from '@/data/books';
 import { isUnlocked, useApp } from '@/store/app-store';
+import { useContentWidth } from '@/hooks/use-content-width';
 import { colors, fonts } from '@/theme';
 
 const SUGGESTIONS = ['bichos', 'espaço', 'mistério', 'natureza', 'humor', 'Cacá', 'família'];
@@ -16,11 +17,14 @@ export default function BuscarScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(params.q ?? '');
   const { state } = useApp();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
 
-  useEffect(() => {
+  // Quando outra tela abre a busca com um termo (ex.: "Ver a série"), usa esse termo.
+  const [lastParam, setLastParam] = useState(params.q);
+  if (params.q !== lastParam) {
+    setLastParam(params.q);
     if (params.q) setQuery(params.q);
-  }, [params.q]);
+  }
 
   const results = searchBooks(query);
   const cols = 3;

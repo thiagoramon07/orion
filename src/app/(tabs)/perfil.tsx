@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -8,6 +8,7 @@ import { Medal } from '@/components/medal';
 import { BADGES } from '@/data/badges';
 import { ageLabel } from '@/data/books';
 import { currentStreak, earnedBadges, useApp } from '@/store/app-store';
+import { confirmAsync } from '@/utils/notify';
 import { colors, fonts, radii } from '@/theme';
 
 export default function PerfilScreen() {
@@ -15,17 +16,11 @@ export default function PerfilScreen() {
   const earned = earnedBadges(state);
   const streak = currentStreak(state.readDays);
 
-  const resetAll = () => {
-    const go = () => {
-      actions.reset();
-      router.replace('/');
-    };
-    if (Platform.OS === 'web') go();
-    else
-      Alert.alert('Recomeçar do zero?', 'Isso apaga o perfil e o progresso salvos neste aparelho.', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Apagar', style: 'destructive', onPress: go },
-      ]);
+  const resetAll = async () => {
+    const ok = await confirmAsync('Recomeçar do zero?', 'Isso apaga o perfil e o progresso salvos neste navegador.', 'Apagar');
+    if (!ok) return;
+    actions.reset();
+    router.replace('/');
   };
 
   return (

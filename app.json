@@ -3,7 +3,7 @@
     "name": "Folheia",
     "slug": "folheia",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "folheia",
     "userInterfaceStyle": "light",
@@ -18,6 +18,13 @@
     },
     "web": {
       "output": "single",
+      "bundler": "metro",
+      "name": "Folheia",
+      "shortName": "Folheia",
+      "lang": "pt-BR",
+      "description": "Livros infantis em português, com narração, medalhas e um espaço seguro para ler.",
+      "themeColor": "#0B6E6E",
+      "backgroundColor": "#0B6E6E",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

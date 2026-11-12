@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Platform,
   NativeScrollEvent,
   NativeSyntheticEvent,
   StyleSheet,
@@ -17,8 +18,6 @@ import { Caca } from '@/components/caca';
 import { Icon } from '@/components/icon';
 import { IconButton } from '@/components/icon-button';
 import { Medal } from '@/components/medal';
-import * as Speech from 'expo-speech';
-
 import { BookPage as BookPageView } from '@/components/reader/book-page';
 import { PlayerBar } from '@/components/reader/player-bar';
 import { SettingsPopover } from '@/components/reader/settings-popover';
@@ -26,8 +25,11 @@ import { BADGES } from '@/data/badges';
 import { Book, BookPage, getBook } from '@/data/books';
 import { SPEECH_RATE, useNarration } from '@/hooks/use-narration';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { useWebKeys } from '@/hooks/use-web-keys';
+import { speakShort, unlockSpeechOnWeb } from '@/utils/voice';
 import { isUnlocked, PREVIEW_PAGES, useApp } from '@/store/app-store';
 import { colors, fonts } from '@/theme';
+import { goBackOr } from '@/utils/navigation';
 
 type Item = { kind: 'page'; page: BookPage; index: number } | { kind: 'end' } | { kind: 'paywall' };
 
@@ -40,7 +42,7 @@ export default function LeitorScreen() {
     return (
       <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
         <Text style={styles.endTitle}>Livro não encontrado.</Text>
-        <Button title="Voltar" onPress={() => router.back()} />
+        <Button title="Voltar" onPress={() => goBackOr('/explorar')} />
       </SafeAreaView>
     );
   }
@@ -119,6 +121,7 @@ function Reader({ book }: { book: Book }) {
   };
 
   const togglePlay = () => {
+    unlockSpeechOnWeb();
     if (onEnd) {
       goTo(0);
       setPlaying(true);
@@ -129,18 +132,41 @@ function Reader({ book }: { book: Book }) {
   // Toque numa palavra (com a narração pausada) para ouvir só ela.
   const [tapped, setTapped] = useState(-1);
   const tapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => setTapped(-1), [index]);
+  const [tappedPage, setTappedPage] = useState(index);
+  if (tappedPage !== index) {
+    setTappedPage(index);
+    setTapped(-1);
+  }
   useEffect(() => () => clearTimeout(tapTimer.current), []);
   const speakWord = (i: number, word: string) => {
     if (playing) return;
+    unlockSpeechOnWeb();
     const clean = word.replace(/[^\p{L}\p{N}-]/gu, '');
     if (!clean) return;
-    Speech.stop();
-    Speech.speak(clean, { language: 'pt-BR', rate: SPEECH_RATE[settings.speed] * 0.85 });
+    speakShort(clean, SPEECH_RATE[settings.speed] * 0.85);
     setTapped(i);
     clearTimeout(tapTimer.current);
     tapTimer.current = setTimeout(() => setTapped(-1), 1200);
   };
+
+  // Teclado no computador: ← → viram a página, espaço lê/pausa, Esc fecha.
+  useWebKeys((key) => {
+    switch (key) {
+      case 'ArrowRight':
+        goTo(index + 1);
+        return true;
+      case 'ArrowLeft':
+        goTo(index - 1);
+        return true;
+      case ' ':
+        togglePlay();
+        return true;
+      case 'Escape':
+        goBackOr('/explorar');
+        return true;
+    }
+  });
+  const showArrows = Platform.OS === 'web' && width >= 600;
 
   const fav = state.favorites.includes(book.id);
   const saved = state.saved.includes(book.id);
@@ -157,7 +183,7 @@ function Reader({ book }: { book: Book }) {
           <BookPageView
             page={item.page}
             number={item.index + 1}
-            width={width}
+            width={Math.min(width, 1100)}
             height={pageH}
             spread={spread}
             night={night}
@@ -185,7 +211,7 @@ function Reader({ book }: { book: Book }) {
           <Text style={styles.topTitle} numberOfLines={1}>
             {book.title}
           </Text>
-          <IconButton name="close" label="Fechar livro" color={colors.white} onPress={() => router.back()} />
+          <IconButton name="close" label="Fechar livro" color={colors.white} onPress={() => goBackOr('/explorar')} />
         </View>
       </SafeAreaView>
       {!unlocked ? (
@@ -212,11 +238,37 @@ function Reader({ book }: { book: Book }) {
         onScrollToIndexFailed={() => {}}
       />
 
+      {showArrows ? (
+        <>
+          {index > 0 ? (
+            <IconButton
+              name="back"
+              label="Página anterior"
+              color={colors.primary}
+              background={colors.white}
+              onPress={() => goTo(index - 1)}
+              style={[styles.arrow, { left: 6, top: topSpace + pageH / 2 - 22 }]}
+            />
+          ) : null}
+          {index < items.length - 1 ? (
+            <IconButton
+              name="chevron-right"
+              label="Próxima página"
+              color={colors.primary}
+              background={colors.white}
+              onPress={() => goTo(index + 1)}
+              style={[styles.arrow, { right: 6, top: topSpace + pageH / 2 - 22 }]}
+            />
+          ) : null}
+        </>
+      ) : null}
+
       {showSettings ? (
         <SettingsPopover settings={settings} onChange={actions.updateReader} bottom={playerSpace + 4} />
       ) : null}
 
       <View style={[styles.player, { paddingBottom: insets.bottom + 12 }]}>
+        <View style={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
         <PlayerBar
           playing={playing && !onEnd}
           onTogglePlay={togglePlay}
@@ -227,6 +279,7 @@ function Reader({ book }: { book: Book }) {
           settingsOpen={showSettings}
           night={night}
         />
+        </View>
       </View>
     </View>
   );
@@ -255,7 +308,7 @@ function EndPage({ book, width, bottom, night, onRestart }: { book: Book; width:
           <Button title="Fazer o quiz" variant="accent" onPress={() => router.push({ pathname: '/quiz/[id]', params: { id: book.id } })} />
         ) : null}
         <Button title="Ler de novo" variant="primary" onPress={onRestart} />
-        <Button title="Voltar para a estante" variant="outline" textColor={colors.primary} borderColor={colors.primary} onPress={() => router.back()} />
+        <Button title="Voltar para a estante" variant="outline" textColor={colors.primary} borderColor={colors.primary} onPress={() => goBackOr('/explorar')} />
       </View>
     </View>
   );
@@ -273,7 +326,7 @@ function Paywall({ book, width, bottom, night }: { book: Book; width: number; bo
       </Text>
       <View style={styles.endButtons}>
         <Button title="Liberar leitura completa" variant="accent" onPress={() => router.push('/assinatura')} />
-        <Button title="Voltar para a estante" variant="outline" textColor={colors.primary} borderColor={colors.primary} onPress={() => router.back()} />
+        <Button title="Voltar para a estante" variant="outline" textColor={colors.primary} borderColor={colors.primary} onPress={() => goBackOr('/explorar')} />
       </View>
     </View>
   );
@@ -289,6 +342,13 @@ const styles = StyleSheet.create({
   previewPages: { fontFamily: fonts.bold, fontSize: 13, color: colors.text },
   page: { paddingHorizontal: 16, paddingTop: 16, gap: 14, alignItems: 'center' },
   center: { alignItems: 'center', justifyContent: 'center', gap: 12 },
+  arrow: {
+    position: 'absolute',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   player: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
   endTitle: { fontFamily: fonts.title, fontSize: 28, lineHeight: 32, color: colors.primary, textAlign: 'center' },
   endText: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 24, color: colors.textSecondary, textAlign: 'center' },

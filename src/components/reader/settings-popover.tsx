@@ -72,6 +72,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     left: 16,
+    maxWidth: 420,
+    marginLeft: 'auto',
     backgroundColor: colors.white,
     borderRadius: radii.cardLarge,
     padding: 18,
