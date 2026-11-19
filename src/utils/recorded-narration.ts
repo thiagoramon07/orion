@@ -9,7 +9,9 @@ import narration from '@/data/narration.json';
  */
 export type Recording = { url: string; words: [number, number][]; duration: number };
 
-type Manifest = { books: Record<string, ({ file: string; hash: string; duration: number; words: [number, number][] } | null)[]> };
+type Manifest = {
+  books: Record<string, ({ file: string; hash: string; v?: string; duration: number; words: [number, number][] } | null)[]>;
+};
 const MANIFEST = narration as unknown as Manifest;
 
 /** Mesmo hash do script de gravação (FNV-1a 32 bits). */
@@ -26,7 +28,9 @@ export function getRecording(bookId: string | undefined, pageIndex: number, text
   if (Platform.OS !== 'web' || !bookId || !text) return undefined;
   const page = MANIFEST.books[bookId]?.[pageIndex];
   if (!page || page.hash !== textHash(text)) return undefined;
-  return { url: `/narracao/${page.file}`, words: page.words, duration: page.duration };
+  // ?v=… muda quando o áudio é regravado/ajustado, para o aparelho não tocar a versão antiga do cache.
+  const version = page.v ? `?v=${page.v}` : '';
+  return { url: `/narracao/${page.file}${version}`, words: page.words, duration: page.duration };
 }
 
 /** Velocidade de reprodução do áudio gravado (o tom da voz é preservado). */

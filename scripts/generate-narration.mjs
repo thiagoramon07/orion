@@ -26,6 +26,7 @@
  * A chave nunca vai para o app: o áudio é gerado uma vez e servido como arquivo estático.
  */
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -90,6 +91,9 @@ if (normalizeOnly) {
       if (normalizeLoudness(join(AUDIO_DIR, dir, f))) n++;
     }
   }
+  const manifest = JSON.parse(readFileSync(MANIFEST_FILE, 'utf8'));
+  refreshVersions(manifest);
+  writeFileSync(MANIFEST_FILE, JSON.stringify(manifest) + '\n');
   console.log(`Volume normalizado em ${n} arquivo(s) (${TARGET_LUFS} LUFS).`);
   process.exit(0);
 }
@@ -155,6 +159,21 @@ async function synthesize(text, previousText, nextText) {
     throw new Error(`ElevenLabs respondeu ${res.status}: ${body}`);
   }
   return res.json();
+}
+
+/** Versão do arquivo de áudio (hash do conteúdo): muda a URL quando o áudio muda, evitando cache antigo. */
+function fileVersion(path) {
+  return createHash('sha1').update(readFileSync(path)).digest('hex').slice(0, 8);
+}
+
+/** Atualiza a versão de todos os áudios no manifesto. */
+function refreshVersions(manifest) {
+  for (const pages of Object.values(manifest.books)) {
+    for (const page of pages) {
+      const path = page && join(AUDIO_DIR, page.file);
+      if (path && existsSync(path)) page.v = fileVersion(path);
+    }
+  }
 }
 
 /** Converte o tempo de cada letra no tempo de cada palavra (em ms). */
@@ -241,7 +260,7 @@ async function main() {
     writeFileSync(path, Buffer.from(data.audio_base64, 'base64'));
     normalizeLoudness(path);
     const words = wordTimings(text, data.alignment);
-    pages[i] = { file, hash, duration: words.at(-1)?.[1] ?? 0, words };
+    pages[i] = { file, hash, v: fileVersion(path), duration: words.at(-1)?.[1] ?? 0, words };
     generated++;
     chars += text.length;
     console.log(`ok (${(pages[i].duration / 1000).toFixed(1)} s)`);
