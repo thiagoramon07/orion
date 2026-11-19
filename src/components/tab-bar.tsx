@@ -3,7 +3,7 @@ import type { BottomTabBarProps } from 'expo-router/tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caca } from '@/components/caca';
+import { ChildAvatar } from '@/components/child-avatar';
 import { Icon, IconName } from '@/components/icon';
 import { useApp } from '@/store/app-store';
 import { colors, fonts } from '@/theme';
@@ -57,7 +57,7 @@ export function TabBar({ state, navigateToTab }: BottomTabBarProps) {
                 accessibilityLabel={`Perfil de ${app.state.childName || 'criança'}`}
                 style={styles.centerWrap}>
                 <View style={[styles.center, focused && { borderColor: colors.accent }]}>
-                  <Caca variant="head" size={54} />
+                  <ChildAvatar avatar={app.state.avatar} size={58} />
                 </View>
               </Pressable>
             );

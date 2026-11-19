@@ -18,9 +18,12 @@ import { IconButton } from '@/components/icon-button';
 import { Logo } from '@/components/logo';
 import { Scene } from '@/components/scene';
 import { Shelf } from '@/components/shelf';
-import { Book, BOOKS, booksForAge } from '@/data/books';
+import { ChildAvatar } from '@/components/child-avatar';
+import { Book, BOOKS } from '@/data/books';
+import { getInterest } from '@/data/interests';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { currentStreak, useApp } from '@/store/app-store';
+import { currentStreak, minutesToday, useApp } from '@/store/app-store';
+import { booksForInterest, recommendedFor } from '@/utils/recommend';
 import { useContentWidth } from '@/hooks/use-content-width';
 import { colors, fonts, radii } from '@/theme';
 
@@ -43,18 +46,43 @@ export default function ExplorarScreen() {
   const streak = currentStreak(state.readDays);
 
   const inProgress = BOOKS.filter((b) => (state.progress[b.id] ?? 0) > 0 && !state.finished.includes(b.id));
-  const forAge = booksForAge(state.childAge);
+  const forYou = recommendedFor(state.childAge, state.interests, state.finished);
+  const today = minutesToday(state.readingLog);
+  const goal = state.dailyGoalMin;
+  const goalDone = today >= goal;
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 32, gap: 24 }}>
         <View style={styles.header}>
-          <View>
-            <Logo size={26} color={colors.primary} />
-            <Text style={styles.hello}>Oi, {state.childName || 'leitor'}! 👋</Text>
-          </View>
+          <Pressable
+            onPress={() => router.push(state.profiles.length > 1 ? '/quem-le' : '/perfil')}
+            accessibilityRole="button"
+            accessibilityLabel={state.profiles.length > 1 ? 'Trocar de leitor' : 'Meu perfil'}
+            style={styles.who}>
+            <ChildAvatar avatar={state.avatar} size={48} />
+            <View>
+              <Logo size={22} color={colors.primary} />
+              <Text style={styles.hello}>Oi, {state.childName || 'leitor'}! 👋</Text>
+            </View>
+          </Pressable>
           <View style={styles.streak} accessible accessibilityLabel={`${streak} dias seguidos lendo`}>
-            <Text style={styles.streakText}>🔥 {streak} {streak === 1 ? 'dia' : 'dias'}</Text>
+            <Text style={styles.streakText}>🔥 {streak}</Text>
+          </View>
+        </View>
+
+        <View
+          style={[styles.goalCard, goalDone && styles.goalCardDone]}
+          accessible
+          accessibilityLabel={`Meta de hoje: ${today} de ${goal} minutos lidos`}>
+          <Text style={styles.goalEmoji}>{goalDone ? '🏆' : '📖'}</Text>
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={styles.goalTitle}>
+              {goalDone ? 'Meta de hoje cumprida!' : `Hoje: ${today} de ${goal} min de leitura`}
+            </Text>
+            <View style={styles.goalTrack}>
+              <View style={[styles.goalFill, { width: `${Math.min(100, (today / goal) * 100)}%` }]} />
+            </View>
           </View>
         </View>
 
@@ -80,7 +108,14 @@ export default function ExplorarScreen() {
         {category === 'para-voce' && (
           <>
             {inProgress.length > 0 && <Shelf title="Continue lendo" books={inProgress} showProgress />}
-            <Shelf title={`Para quem tem ${state.childAge} anos`} books={forAge} />
+            <Shelf title="Escolhidos para você" books={forYou} />
+            {state.interests.slice(0, 3).map((id) => {
+              const it = getInterest(id);
+              const list = booksForInterest(id, state.childAge);
+              return it && list.length ? (
+                <Shelf key={id} title={`${it.emoji} Porque você gosta de ${it.label.toLowerCase()}`} books={list} />
+              ) : null;
+            })}
             <Shelf title="Aventuras da Cacá" books={BOOKS.filter((b) => b.series === 'Aventuras da Cacá')} />
             <Shelf title="Natureza e bichos" books={BOOKS.filter((b) => b.tags.includes('bichos') || b.tags.includes('natureza'))} />
             <Shelf title="Toda a biblioteca" books={BOOKS} />
@@ -205,6 +240,24 @@ function Featured({ books }: { books: Book[] }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.primarySoft },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8 },
+  who: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 },
+  goalCard: {
+    marginHorizontal: 20,
+    marginTop: -8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.white,
+    borderRadius: radii.card,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  goalCardDone: { borderColor: colors.leaf, backgroundColor: '#F1FAF1' },
+  goalEmoji: { fontSize: 28 },
+  goalTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.text },
+  goalTrack: { height: 10, borderRadius: 5, backgroundColor: colors.divider, overflow: 'hidden' },
+  goalFill: { height: '100%', backgroundColor: colors.leaf, borderRadius: 5 },
   hello: { fontFamily: fonts.bold, fontSize: 18, color: colors.text, marginTop: 2 },
   streak: { backgroundColor: colors.white, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
   streakText: { fontFamily: fonts.bold, fontSize: 15, color: colors.terracotta },
