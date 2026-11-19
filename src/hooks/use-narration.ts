@@ -1,6 +1,7 @@
 import * as Speech from 'expo-speech';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AUDIO_RATE, audioElement, getRecording, Recording, setSource, stopRecorded } from '@/utils/recorded-narration';
 import { getBestPtBrVoice } from '@/utils/voice';
 
 export type Word = { text: string; start: number; end: number };
@@ -23,20 +24,31 @@ function wordDuration(word: string, rate: number) {
 }
 
 type Options = {
+  /** Livro e página: usados para achar a narração gravada. */
+  bookId?: string;
+  pageIndex?: number;
   text: string;
   playing: boolean;
   speed: SpeedKey;
   /** Chamado quando termina de ler o texto inteiro. */
   onFinished: () => void;
+  /** O navegador bloqueou o áudio (ex.: sem toque do usuário). */
+  onBlocked?: () => void;
 };
 
 /**
- * Lê o texto em voz alta (expo-speech, pt-BR) e informa qual palavra está sendo lida.
- * Usa o evento onBoundary quando disponível (iOS/web) e uma estimativa por tempo no restante.
+ * Lê o texto em voz alta e informa qual palavra está sendo lida.
+ * 1º) Narração gravada (voz real, ElevenLabs) com o tempo exato de cada palavra.
+ * 2º) Sem gravação, usa a voz do sistema (expo-speech, pt-BR) com onBoundary ou estimativa.
  * Pausar e retomar continua da palavra atual.
  */
-export function useNarration({ text, playing, speed, onFinished }: Options) {
+export function useNarration({ bookId, pageIndex = 0, text, playing, speed, onFinished, onBlocked }: Options) {
   const words = useMemo(() => tokenize(text), [text]);
+  const recording = useMemo(() => getRecording(bookId, pageIndex, text), [bookId, pageIndex, text]);
+  const onBlockedRef = useRef(onBlocked);
+  useEffect(() => {
+    onBlockedRef.current = onBlocked;
+  });
   const [wordIndex, setWordIndex] = useState(-1);
   const indexRef = useRef(-1);
   const lastText = useRef(text);
@@ -57,7 +69,60 @@ export function useNarration({ text, playing, speed, onFinished }: Options) {
     }
     if (!playing || words.length === 0) {
       Speech.stop();
+      stopRecorded();
       return;
+    }
+
+    if (recording) return playRecording(recording);
+
+    function playRecording(rec: Recording) {
+      const el = audioElement()!;
+      let stopped = false;
+      let raf = 0;
+      const startAt = indexRef.current > 0 && indexRef.current < rec.words.length ? indexRef.current : 0;
+
+      const tick = () => {
+        if (stopped) return;
+        const t = el.currentTime * 1000 + 40;
+        let i = indexRef.current < 0 ? 0 : indexRef.current;
+        while (i + 1 < rec.words.length && rec.words[i + 1][0] <= t) i++;
+        while (i > 0 && rec.words[i][0] > t) i--;
+        if (i !== indexRef.current) setIndex(i);
+        raf = requestAnimationFrame(tick);
+      };
+      const ended = () => {
+        if (stopped) return;
+        stopped = true;
+        cancelAnimationFrame(raf);
+        setIndex(-1);
+        onFinishedRef.current();
+      };
+      const begin = () => {
+        if (stopped) return;
+        el.playbackRate = AUDIO_RATE[speed];
+        el.currentTime = startAt > 0 ? Math.max(0, rec.words[startAt][0] - 60) / 1000 : 0;
+        setIndex(startAt);
+        el.play()
+          .then(() => {
+            raf = requestAnimationFrame(tick);
+          })
+          .catch(() => {
+            if (!stopped) onBlockedRef.current?.();
+          });
+      };
+
+      setSource(rec.url);
+      el.addEventListener('ended', ended);
+      if (el.readyState >= 1) begin();
+      else el.addEventListener('loadedmetadata', begin, { once: true });
+
+      return () => {
+        stopped = true;
+        cancelAnimationFrame(raf);
+        el.removeEventListener('ended', ended);
+        el.removeEventListener('loadedmetadata', begin);
+        el.pause();
+      };
     }
 
     const rate = SPEECH_RATE[speed];
@@ -121,10 +186,16 @@ export function useNarration({ text, playing, speed, onFinished }: Options) {
       clearTimeout(safety);
       Speech.stop();
     };
-  }, [playing, text, speed, words]);
+  }, [playing, text, speed, words, recording]);
 
   // Para a fala ao sair da tela.
-  useEffect(() => () => void Speech.stop(), []);
+  useEffect(
+    () => () => {
+      Speech.stop();
+      stopRecorded();
+    },
+    [],
+  );
 
-  return { words, wordIndex };
+  return { words, wordIndex, recording };
 }
