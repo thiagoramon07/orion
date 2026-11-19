@@ -16,7 +16,7 @@ import { Button } from '@/components/button';
 import { Icon, IconName } from '@/components/icon';
 import { IconButton } from '@/components/icon-button';
 import { Logo } from '@/components/logo';
-import { Scene } from '@/components/scene';
+import { PageArt } from '@/components/page-art';
 import { Shelf } from '@/components/shelf';
 import { ChildAvatar } from '@/components/child-avatar';
 import { Book, BOOKS } from '@/data/books';
@@ -201,7 +201,7 @@ function Featured({ books }: { books: Book[] }) {
         onMomentumScrollEnd={(e) => setActive(Math.round(e.nativeEvent.contentOffset.x / (cardW + 12)))}
         renderItem={({ item }) => (
           <View style={[styles.feat, { width: cardW, backgroundColor: item.cover.background }]}>
-            <Scene scene={item.pages[0].scene} style={StyleSheet.absoluteFill} />
+            <PageArt bookId={item.id} pageIndex={0} scene={item.pages[0].scene} style={StyleSheet.absoluteFill} />
             <View style={styles.featShade} />
             {item.isNew ? <Text style={styles.featTag}>NOVO NO FOLHEIA</Text> : <Text style={styles.featTag}>FAVORITO DA TURMA</Text>}
             <View style={styles.featBottom}>
