@@ -53,6 +53,7 @@ export default function AberturaScreen() {
   }));
 
   // Quem já tem perfil de criança vai direto para a estante.
+  if (state.profiles.length > 1) return <Redirect href="/quem-le" />;
   if (state.childName) return <Redirect href="/explorar" />;
 
   return (

@@ -9,22 +9,21 @@ import { Button } from '@/components/button';
 import { IconButton } from '@/components/icon-button';
 import { Input } from '@/components/input';
 import { getBook } from '@/data/books';
-import { useApp } from '@/store/app-store';
 import { colors, fonts, sizes } from '@/theme';
 
 export default function NomeCriancaScreen() {
   const { book: bookId, age } = useLocalSearchParams<{ book: string; age: string }>();
   const book = getBook(bookId);
-  const { actions } = useApp();
   const [name, setName] = useState('');
   const valid = name.trim().length >= 2;
 
   const start = () => {
     if (!valid || !book) return;
-    actions.setChild(name.trim(), Number(age) || 6, book.id);
-    // Abre o livro direto; ao fechar o leitor, a criança cai na estante (Explorar).
-    router.dismissAll();
-    router.replace({ pathname: '/ler/[id]', params: { id: book.id } });
+    // Próximos passos: avatar e interesses; depois o livro abre.
+    router.push({
+      pathname: '/criar-perfil',
+      params: { modo: 'onboarding', nome: name.trim(), idade: String(Number(age) || 6), livro: book.id },
+    });
   };
 
   return (
@@ -52,7 +51,7 @@ export default function NomeCriancaScreen() {
             onSubmitEditing={start}
           />
           <View style={{ marginTop: 8 }}>
-            <Button title="Começar a ler" variant="accent" disabled={!valid} onPress={start} />
+            <Button title="Continuar" variant="accent" disabled={!valid} onPress={start} />
           </View>
           <Text style={styles.note}>Usamos só o primeiro nome ou apelido. Nada de sobrenome.</Text>
         </ScrollView>

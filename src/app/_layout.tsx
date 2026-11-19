@@ -69,6 +69,9 @@ const TITLES: Record<string, string> = {
   '/correio': 'Correio',
   '/assinatura': 'Assinatura',
   '/politica': 'Termos e privacidade',
+  '/criar-perfil': 'Perfil da criança',
+  '/quem-le': 'Quem vai ler?',
+  '/pais': 'Área dos responsáveis',
 };
 
 /** Título da aba do navegador conforme a tela. */

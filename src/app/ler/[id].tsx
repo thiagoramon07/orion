@@ -24,6 +24,7 @@ import { SettingsPopover } from '@/components/reader/settings-popover';
 import { BADGES } from '@/data/badges';
 import { Book, BookPage, getBook } from '@/data/books';
 import { SPEECH_RATE, useNarration } from '@/hooks/use-narration';
+import { useReadingTimer } from '@/hooks/use-reading-timer';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { useWebKeys } from '@/hooks/use-web-keys';
 import { playRecordedWord, unlockAudioOnWeb } from '@/utils/recorded-narration';
@@ -77,6 +78,8 @@ function Reader({ book }: { book: Book }) {
   const [index, setIndex] = useState(startPage);
   const [playing, setPlaying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  // Registro de leitura: minutos lidos por dia (perfil ativo).
+  const { touch } = useReadingTimer({ active: true, playing, onTick: actions.addReadingTime });
   const listRef = useRef<FlatList<Item>>(null);
 
   const current = items[index];
@@ -112,12 +115,13 @@ function Reader({ book }: { book: Book }) {
 
   // Salva progresso e marca o livro como lido ao chegar ao fim.
   useEffect(() => {
+    touch();
     if (index < readable) actions.setProgress(book.id, index);
     else if (unlocked) {
       actions.markFinished(book.id);
       actions.setProgress(book.id, 0);
     }
-  }, [index, readable, unlocked, book.id, actions]);
+  }, [index, readable, unlocked, book.id, actions, touch]);
 
   const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.round(e.nativeEvent.contentOffset.x / width);
@@ -125,6 +129,7 @@ function Reader({ book }: { book: Book }) {
   };
 
   const togglePlay = () => {
+    touch();
     unlockAudioOnWeb();
     unlockSpeechOnWeb();
     if (onEnd) {
@@ -145,6 +150,7 @@ function Reader({ book }: { book: Book }) {
   useEffect(() => () => clearTimeout(tapTimer.current), []);
   const speakWord = (i: number, word: string) => {
     if (playing) return;
+    touch();
     unlockAudioOnWeb();
     unlockSpeechOnWeb();
     const clean = word.replace(/[^\p{L}\p{N}-]/gu, '');
