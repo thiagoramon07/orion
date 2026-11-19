@@ -44,9 +44,15 @@ app: o áudio é gerado uma vez e servido como arquivo estático.
 Ao criar ou editar um livro, grave só o que mudou:
 
 ```bash
-ELEVENLABS_API_KEY=sua-chave node scripts/generate-narration.mjs            # páginas novas/alteradas
-ELEVENLABS_API_KEY=sua-chave node scripts/generate-narration.mjs --book caca-lixeiras
+# 1) Simulação: mostra o saldo do plano e quanto vai gastar (não grava nada)
+ELEVENLABS_API_KEY=sua-chave node scripts/generate-narration.mjs
+# 2) Grava de verdade
+ELEVENLABS_API_KEY=sua-chave node scripts/generate-narration.mjs --confirmar
 ```
+
+Travas de custo: sem `--confirmar` nada é gravado; o script consulta o saldo antes e não grava
+se passar do saldo menos uma reserva de 3.000 caracteres; recusa se a conta permitir cobrança
+extra (overage); e para na hora se a cota acabar.
 
 Página sem gravação (ou com texto alterado depois da gravação) usa a voz do navegador como reserva.
 
