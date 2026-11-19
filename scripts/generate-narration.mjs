@@ -14,6 +14,10 @@
  *   - Se a conta permitir cobrança extra (overage), recusa a gravação.
  *   - Para na hora se a ElevenLabs avisar que a cota acabou.
  *
+ * Volume: cada áudio é normalizado para -14 LUFS (pico -1 dBTP) com ffmpeg, o volume usual de
+ * apps no celular. Para ajustar só o volume dos áudios já gravados (não gasta créditos):
+ *   node scripts/generate-narration.mjs --normalizar
+ *
  * Saída:
  *   public/narracao/<livro>/<página>.mp3   áudio de cada página
  *   src/data/narration.json                tempos de cada palavra (para o destaque) e hash do texto
@@ -21,7 +25,8 @@
  * Só grava páginas novas ou com texto alterado (compara o hash), para não gastar cota à toa.
  * A chave nunca vai para o app: o áudio é gerado uma vez e servido como arquivo estático.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -44,8 +49,50 @@ const confirmed = args.includes('--confirmar');
 const force = args.includes('--force');
 /** Só recalcula os hashes do manifesto (sem gravar nada). */
 const rehashOnly = args.includes('--rehash');
+/** Só normaliza o volume dos áudios existentes (sem gravar nada). */
+const normalizeOnly = args.includes('--normalizar');
+
+/** Volume alvo da narração (LUFS integrados) e pico máximo (dBTP). */
+const TARGET_LUFS = -14;
+const TARGET_PEAK = -1;
+
+/**
+ * Normaliza o volume de um mp3 com ffmpeg (loudnorm em duas passadas, sem alterar a duração,
+ * para manter o tempo de cada palavra). Sem ffmpeg instalado, mantém o arquivo como está.
+ */
+function normalizeLoudness(path) {
+  const base = `I=${TARGET_LUFS}:TP=${TARGET_PEAK}:LRA=11`;
+  const probe = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', path, '-af', `loudnorm=${base}:print_format=json`, '-f', 'null', '-'], {
+    encoding: 'utf8',
+  });
+  if (probe.error) {
+    console.warn('⚠️  ffmpeg não encontrado: volume não normalizado.');
+    return false;
+  }
+  const m = probe.stderr.match(/\{[\s\S]*?\}/g);
+  if (!m) return false;
+  const st = JSON.parse(m[m.length - 1]);
+  const filter =
+    `loudnorm=${base}:measured_I=${st.input_i}:measured_TP=${st.input_tp}:measured_LRA=${st.input_lra}` +
+    `:measured_thresh=${st.input_thresh}:offset=${st.target_offset}:linear=true`;
+  const tmp = path.replace(/\.mp3$/, '.tmp.mp3');
+  const out = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', path, '-af', filter, '-ar', '44100', '-ac', '1', '-c:a', 'libmp3lame', '-b:a', '96k', tmp]);
+  if (out.status !== 0) return false;
+  renameSync(tmp, path);
+  return true;
+}
 const onlyBook = args.includes('--book') ? args[args.indexOf('--book') + 1] : undefined;
 const apiKey = process.env.ELEVENLABS_API_KEY;
+if (normalizeOnly) {
+  let n = 0;
+  for (const dir of readdirSync(AUDIO_DIR)) {
+    for (const f of readdirSync(join(AUDIO_DIR, dir)).filter((x) => x.endsWith('.mp3'))) {
+      if (normalizeLoudness(join(AUDIO_DIR, dir, f))) n++;
+    }
+  }
+  console.log(`Volume normalizado em ${n} arquivo(s) (${TARGET_LUFS} LUFS).`);
+  process.exit(0);
+}
 if (!apiKey && !rehashOnly) {
   console.error('Defina ELEVENLABS_API_KEY com a chave da ElevenLabs.');
   process.exit(1);
@@ -192,6 +239,7 @@ async function main() {
     const data = await synthesize(text, book.texts[i - 1], book.texts[i + 1]);
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, Buffer.from(data.audio_base64, 'base64'));
+    normalizeLoudness(path);
     const words = wordTimings(text, data.alignment);
     pages[i] = { file, hash, duration: words.at(-1)?.[1] ?? 0, words };
     generated++;

@@ -54,6 +54,10 @@ Travas de custo: sem `--confirmar` nada é gravado; o script consulta o saldo an
 se passar do saldo menos uma reserva de 3.000 caracteres; recusa se a conta permitir cobrança
 extra (overage); e para na hora se a cota acabar.
 
+Volume: cada áudio é normalizado para -14 LUFS (volume usual de apps no celular) com `ffmpeg`.
+Para reajustar o volume dos áudios já gravados, sem gastar créditos:
+`node scripts/generate-narration.mjs --normalizar`.
+
 Página sem gravação (ou com texto alterado depois da gravação) usa a voz do navegador como reserva.
 
 ## Teclado (computador)
