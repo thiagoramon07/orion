@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <!-- viewport-fit=cover: respeita o "notch" do iPhone quando instalado na tela inicial -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>%WEB_TITLE%</title>
+    <meta name="description" content="Folheia: livros infantis em português, com narração, medalhas e um espaço seguro para ler." />
+
+    <!-- Web app instalável (PWA) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Folheia" />
+    <meta name="application-name" content="Folheia" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        margin: 0;
+        background-color: #e3f1f0;
+        /* toque mais rápido e sem destaque cinza no celular */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: 100%;
+        overscroll-behavior: none;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+      /* Fundo verde enquanto o app carrega */
+      #root:empty {
+        background: #0b6e6e;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>O Folheia precisa do JavaScript ativado para funcionar.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
