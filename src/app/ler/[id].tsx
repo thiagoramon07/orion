@@ -26,6 +26,7 @@ import { Book, BookPage, getBook } from '@/data/books';
 import { SPEECH_RATE, useNarration } from '@/hooks/use-narration';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { useWebKeys } from '@/hooks/use-web-keys';
+import { playRecordedWord, unlockAudioOnWeb } from '@/utils/recorded-narration';
 import { speakShort, unlockSpeechOnWeb } from '@/utils/voice';
 import { isUnlocked, PREVIEW_PAGES, useApp } from '@/store/app-store';
 import { colors, fonts } from '@/theme';
@@ -92,7 +93,10 @@ function Reader({ book }: { book: Book }) {
     [items.length, reduceMotion],
   );
 
-  const { wordIndex } = useNarration({
+  const { wordIndex, recording } = useNarration({
+    bookId: book.id,
+    pageIndex: Math.min(index, readable - 1),
+    onBlocked: () => setPlaying(false),
     text: pageText,
     playing: playing && !onEnd,
     speed: settings.speed,
@@ -121,6 +125,7 @@ function Reader({ book }: { book: Book }) {
   };
 
   const togglePlay = () => {
+    unlockAudioOnWeb();
     unlockSpeechOnWeb();
     if (onEnd) {
       goTo(0);
@@ -140,10 +145,13 @@ function Reader({ book }: { book: Book }) {
   useEffect(() => () => clearTimeout(tapTimer.current), []);
   const speakWord = (i: number, word: string) => {
     if (playing) return;
+    unlockAudioOnWeb();
     unlockSpeechOnWeb();
     const clean = word.replace(/[^\p{L}\p{N}-]/gu, '');
     if (!clean) return;
-    speakShort(clean, SPEECH_RATE[settings.speed] * 0.85);
+    // Com narração gravada, toca a própria palavra na voz da narradora.
+    if (recording) playRecordedWord(recording, i);
+    else speakShort(clean, SPEECH_RATE[settings.speed] * 0.85);
     setTapped(i);
     clearTimeout(tapTimer.current);
     tapTimer.current = setTimeout(() => setTapped(-1), 1200);

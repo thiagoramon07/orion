@@ -34,6 +34,22 @@ endereço (ex.: `/ler/caca-lixeiras`). Já está configurado para:
 - `public/manifest.webmanifest` + `public/icons/`: nome, ícones da Cacá, abre em tela cheia.
 - No celular: **Compartilhar → Adicionar à Tela de Início** (iPhone) ou **⋮ → Instalar app** (Android/Chrome).
 
+## Narração com voz real (ElevenLabs)
+
+Cada página tem um áudio gravado com a voz **Amanda Kelly** (ElevenLabs, pt-BR), em
+`public/narracao/<livro>/<página>.mp3`, e o tempo de cada palavra em `src/data/narration.json`
+(é isso que faz as palavras acenderem no ritmo da voz). A chave da ElevenLabs **não** vai para o
+app: o áudio é gerado uma vez e servido como arquivo estático.
+
+Ao criar ou editar um livro, grave só o que mudou:
+
+```bash
+ELEVENLABS_API_KEY=sua-chave node scripts/generate-narration.mjs            # páginas novas/alteradas
+ELEVENLABS_API_KEY=sua-chave node scripts/generate-narration.mjs --book caca-lixeiras
+```
+
+Página sem gravação (ou com texto alterado depois da gravação) usa a voz do navegador como reserva.
+
 ## Teclado (computador)
 
 - Leitor: **← →** viram a página, **espaço** lê/pausa, **Esc** fecha.
