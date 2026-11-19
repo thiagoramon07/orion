@@ -195,6 +195,7 @@ function Reader({ book }: { book: Book }) {
       return (
         <View style={[styles.page, { width, paddingBottom: playerSpace }]}>
           <BookPageView
+            bookId={book.id}
             page={item.page}
             number={item.index + 1}
             width={Math.min(width, 1100)}

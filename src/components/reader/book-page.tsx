@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { HighlightedText } from '@/components/reader/highlighted-text';
-import { Scene } from '@/components/scene';
+import { PageArt } from '@/components/page-art';
 import type { BookPage as BookPageData } from '@/data/books';
 import { colors, fonts } from '@/theme';
 
 type Props = {
+  bookId?: string;
   page: BookPageData;
   number: number;
   width: number;
@@ -22,7 +23,7 @@ const PAPER = '#FFFBF2';
 const PAPER_NIGHT = '#1F2738';
 
 /** Página no formato de livro: papel, lombada e número de página. */
-export function BookPage({ page, number, width, height, spread, night, highlight, activeIndex, onWordPress }: Props) {
+export function BookPage({ bookId, page, number, width, height, spread, night, highlight, activeIndex, onWordPress }: Props) {
   const paper = night ? PAPER_NIGHT : PAPER;
   const text = (
     <HighlightedText
@@ -44,7 +45,7 @@ export function BookPage({ page, number, width, height, spread, night, highlight
     return (
       <View style={[styles.book, { width: width - 32, height }]}>
         <View style={[styles.leaf, styles.leftLeaf, { backgroundColor: paper }]}>
-          <Scene scene={page.scene} dim={night} style={styles.sceneSpread} />
+          <PageArt bookId={bookId} pageIndex={number - 1} scene={page.scene} dim={night} style={styles.sceneSpread} />
           <View style={[styles.gutterShade, { right: 0 }]} />
         </View>
         <View style={styles.spine} />
@@ -59,7 +60,13 @@ export function BookPage({ page, number, width, height, spread, night, highlight
 
   return (
     <View style={[styles.single, { width: width - 32, height, backgroundColor: paper }]}>
-      <Scene scene={page.scene} dim={night} style={[styles.sceneSingle, { height: Math.min(height * 0.5, width * 0.75) }]} />
+      <PageArt
+        bookId={bookId}
+        pageIndex={number - 1}
+        scene={page.scene}
+        dim={night}
+        style={[styles.sceneSingle, { height: Math.min(height * 0.5, (width - 60) / 1.5) }]}
+      />
       <View style={styles.textArea}>{text}</View>
       {footer}
       <View style={styles.edgeShade} pointerEvents="none" />
@@ -91,9 +98,10 @@ const styles = StyleSheet.create({
   },
   book: { flexDirection: 'row', ...shadow },
   leaf: { flex: 1, padding: 18, overflow: 'hidden' },
-  leftLeaf: { borderTopLeftRadius: 18, borderBottomLeftRadius: 18 },
+  leftLeaf: { borderTopLeftRadius: 18, borderBottomLeftRadius: 18, justifyContent: 'center' },
   rightLeaf: { borderTopRightRadius: 18, borderBottomRightRadius: 18, justifyContent: 'center', gap: 12 },
-  sceneSpread: { flex: 1, borderRadius: 14 },
+  // Ilustração inteira (3:2), emoldurada no centro da página da esquerda.
+  sceneSpread: { width: '100%', aspectRatio: 1.5, borderRadius: 14 },
   spine: { width: 4, backgroundColor: '#D9CBB0' },
   gutterShade: { position: 'absolute', top: 0, bottom: 0, width: 18, backgroundColor: 'rgba(58,36,20,0.08)' },
 });
