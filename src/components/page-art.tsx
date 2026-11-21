@@ -4,7 +4,8 @@ import { Scene } from '@/components/scene';
 import type { Scene as SceneData } from '@/data/books';
 import illustrations from '@/data/illustrations.json';
 
-const MAP = illustrations as Record<string, string[]>;
+// Cada página: caminho da ilustração (svg vetorial ou webp premium) ou null (usa a cena simples).
+const MAP = illustrations as Record<string, (string | null)[]>;
 
 /** URL da ilustração da página (ou undefined se o livro ainda não tem ilustração). */
 export function illustrationUrl(bookId: string | undefined, pageIndex: number): string | undefined {

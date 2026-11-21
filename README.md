@@ -60,6 +60,14 @@ Para reajustar o volume dos áudios já gravados, sem gastar créditos:
 
 Página sem gravação (ou com texto alterado depois da gravação) usa a voz do navegador como reserva.
 
+## Ilustrações
+
+- **Vetoriais (SVG):** geradas por `scripts/ilustracoes/` (`kit.mjs`, `kit2.mjs`, `livros.mjs`).
+- **Premium (ChatGPT):** importe as imagens de um livro com
+  `python3 scripts/ilustracoes/importar.py <livro> livro-01.png livro-02.png ...`
+  (recorta em 3:2, converte para WebP leve e atualiza `src/data/illustrations.json`).
+  Uma página premium substitui a vetorial da mesma página.
+
 ## Teclado (computador)
 
 - Leitor: **← →** viram a página, **espaço** lê/pausa, **Esc** fecha.
